@@ -24,7 +24,7 @@ for i in network_struct:
     net.append([int(i)])
     print(net)
 
-for i in range(int(first_layer)):
+for i in range(first_layer.shape[0]):
     net.append(network_struct[0][i])
     print(net)
 
