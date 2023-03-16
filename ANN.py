@@ -1,4 +1,4 @@
-import numpy as np
+﻿import numpy as np
 
 class node:
     def __init__(self, lastlayer = None):
@@ -8,7 +8,7 @@ class node:
 
 def main():
     print("Network Structure:")
-    net_structure = np.array([4,2,1], dtype=np.int32)
+    net_structure = np.array([4,2,1])
     print(net_structure)
     output_layer = None
     net = []
@@ -22,7 +22,6 @@ def main():
     print("network: ", net)
     print("output layer: ",output_layer) #Output layer aka last layer
     print()
-
 
     # net = []
     # nd = node()
@@ -40,7 +39,6 @@ def main():
     input_data = np.loadtxt('input.txt', delimiter=',', dtype=np.float64)
     print(input_data)
 
-
     # with open('input.txt', 'r') as num:
     #     first_layer = np.array(num.read().split(','))
     #     #print(first_layer, '\n')
@@ -51,7 +49,6 @@ def main():
     #print(type(input))
     #print(len(input))
     #connections:
-
     for i in range(len(input_data)):
         net[0][i].collector = input_data[i]
         print(net[0][i].collector)
