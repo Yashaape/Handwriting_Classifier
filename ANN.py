@@ -16,7 +16,7 @@ def main():
     for i in net_structure:
         first_layer = []
         for j in range(i):
-            first_layer.append(node(output_layer))
+            first_layer.append(node(lastlayer=output_layer))
         net.append(first_layer)
         output_layer = first_layer
     print("network: ", net)
@@ -57,7 +57,7 @@ def main():
         print(net[0][i].collector)
 
     print()
-    print("Sum: ") #doesn't actually provide the correct sum correct sum should be: 46
+    print("Output Layer: ")
 
     #print(len(input_data))
     #print(sum(input_data))
@@ -66,7 +66,7 @@ def main():
         for n in net[i]:
             #print(n)
             #print(net[i-1])
-            for c in net[i-1]: # replace n.connetions
+            for c in net[i-1]: # replace n.connetions, causes summation to be incorrect
                 #print(c)
                 n.collector = n.collector + c.collector
 
