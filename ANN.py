@@ -23,32 +23,10 @@ def main():
     print("output layer: ",output_layer) #Output layer aka last layer
     print()
 
-    # net = []
-    # nd = node()
-    # for i in net_structure:
-    #     tmp = []
-    #     for j in range(i):
-    #         tmp.append(nd)
-    #     net.append(tmp)
-    #     output_layer = tmp
-    # print(net)
-    # print()
-    # print(output_layer)
-    # print()
     print("Inputs:")
-    input_data = np.loadtxt('input.txt', delimiter=',', dtype=np.float64)
+    input_data = np.loadtxt('input.txt', delimiter=',')
     print(input_data)
 
-    # with open('input.txt', 'r') as num:
-    #     first_layer = np.array(num.read().split(','))
-    #     #print(first_layer, '\n')
-    #     for i in first_layer:
-    #         input_data.append(float(i))
-    #         print(input_data)
-    #print(input_data)
-    #print(type(input))
-    #print(len(input))
-    #connections:
     for i in range(len(input_data)):
         net[0][i].collector = input_data[i]
         print(net[0][i].collector)
@@ -63,7 +41,8 @@ def main():
         for n in net[i]:
             #print(n)
             #print(net[i-1])
-            for c in net[i-1]: # replace n.connetions, causes summation to be incorrect
+            n.connections = net[i-1] # assign n.connections to net[i-1] to avoid summnation errors
+            for c in n.connections:
                 #print(c)
                 n.collector = n.collector + c.collector
 
