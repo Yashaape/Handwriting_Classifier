@@ -17,6 +17,7 @@ def main():
         first_layer = []
         for j in range(i):
             first_layer.append(node(lastlayer=output_layer))
+            #print("first layer: ", first_layer)
         net.append(first_layer)
         output_layer = first_layer
     print("network: ", net)
@@ -42,6 +43,7 @@ def main():
             #print(n)
             #print(net[i-1])
             n.connections = net[i-1] # assign n.connections to net[i-1] to avoid summnation errors
+            #print(n.connections)
             for c in n.connections:
                 #print(c)
                 n.collector = n.collector + c.collector
