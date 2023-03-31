@@ -1,5 +1,6 @@
 ﻿import numpy as np
 import random
+import pickle
 class node:
     def __init__(self, lastlayer = None):
         self.lastlayer = lastlayer
@@ -63,7 +64,8 @@ def main():
                 n.collector = n.collector + (c.collector * w)
 
     print(net[2][0].collector)
-
+    with open('doneANN.pickle', 'wb') as handle:
+        pickle.dump(net, handle)
 
 
 main()
