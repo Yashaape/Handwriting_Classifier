@@ -1,6 +1,7 @@
-﻿import numpy as np
+import numpy as np
 import random
 import pickle
+import math
 class node:
     def __init__(self, lastlayer = None):
         self.lastlayer = lastlayer
@@ -14,6 +15,11 @@ class node:
         for i in range(len(self.connections)):
             self.weights.append(random.random())
         #print(random.random())
+
+def sigmoidal(activation):
+    return 1.0 / (1.0 + math.exp(-activation))
+def sigmoidal_deriv(output):
+    return output * (1.0 - output)
 def main():
     print("Network Structure:")
     net_structure = np.array([4,2,1])
@@ -33,12 +39,13 @@ def main():
     print()
 
     print("Inputs:")
-    input_data = np.loadtxt('input.txt', delimiter=',')
+    input_data = np.loadtxt('input.csv', delimiter=',', dtype=int)
     print(input_data)
 
     for i in range(len(input_data)):
-        net[0][i].collector = input_data[i]
-        print(net[0][i].collector)
+        if i < len(net[0]):
+            net[0][i].collector = input_data[i]
+            print(net[0][i].collector)
 
     print()
     print("Output Layer: ")
@@ -47,7 +54,7 @@ def main():
     #print(sum(input_data))
 
 
-    for i in range(1,len(input_data) - 1, 1):
+    for i in np.nditer(input_data):
         #print(i)
         for n in net[i]:
             #print(n)
