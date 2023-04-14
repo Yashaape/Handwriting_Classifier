@@ -9,6 +9,7 @@ class Node:
         self.collector = 0.0
         self.connections = []
         self.weights = []
+        self.delta = 0.0
 
 net_structure = np.array([4,2,1])
 output_layer = None
@@ -63,17 +64,17 @@ def forward_propagation(network):
     return network[-1][0].collector
 
 #Test case for forward propagation:
-input_values = np.array([0.5982372, 0.000348347, 0.223456, 0.938743784])
-print("Original Weights:")
-net = initialize_network(net_structure)
-print("\nTesting for forward propagation:")
-# Assign input values to the collector of input layer nodes
-for i in range(len(input_values)):
-    net[0][i].collector = input_values[i]
-
-output = forward_propagation(net)
-print("Input Values: ", input_values)
-print("Output: ", output)
+# input_values = np.array([0.5982372, 0.000348347, 0.223456, 0.938743784])
+# print("Original Weights:")
+# net = initialize_network(net_structure)
+# print("\nTesting for forward propagation:")
+# # Assign input values to the collector of input layer nodes
+# for i in range(len(input_values)):
+#     net[0][i].collector = input_values[i]
+#
+# output = forward_propagation(net)
+# print("Input Values: ", input_values)
+# print("Output: ", output)
 
 def back_propagation(network, expected):
     for i in reversed(range(len(network))):
@@ -109,16 +110,77 @@ def update_weights(network, lr):
                 weight = node.weights[j]
                 weight['weights'] += lr * node.delta * con.collector
 
+def train_network(network, train, lr, n_epochs, target_error):
+    epoch = 0
+    while epoch < n_epochs:
+        error_sum = 0.0
+        for data in train:
+            input_values = data['input']
+            expected_output = data['output']
+
+            #Forward Prop:
+            for i in range(len(input_values)):
+                network[0][i].collector = input_values[i]
+            output = forward_propagation(network)
+
+            #calculate error:
+            error = expected_output - output
+            error_sum += error
+
+            #back prop:
+            back_propagation(network, expected_output)
+
+            #update weights:
+            update_weights(network, lr)
+
+        #calculate average error for this epoch
+        avg_error = error_sum / len(train)
+        print("Epoch: {}, l_rate: {}, Error: {}".format(epoch, lr, avg_error))
+
+        # Check if target error is reached:
+        if avg_error <= target_error:
+            print("Target error reached: {}".format(target_error))
+            break
+        epoch += 1
+    if epoch == n_epochs:
+        print("Maximum number of epochs reached. Training stopped.")
+
+# Define the test case
+#net_structure = np.array([4, 2, 1])
+train_data = [{'input': np.array([0.5982372, 0.000348347, 0.223456, 0.938743784]), 'output': 0.8}]
+
+# Initialize the network
+net = initialize_network(net_structure)
+
+# Train the network
+lr = 0.1
+n_epochs = 100
+target_error = 0.05
+
+print("Training the network...")
+train_network(net, train_data, lr, n_epochs, target_error)
+
+# Test the trained network
+input_values = np.array([0.5982372, 0.000348347, 0.223456, 0.938743784])
+output = forward_propagation(net)
+print("Input Values: ", input_values)
+print("Output: ", output)
+
+
+
 #Test Case for backpropagation:
-expected = 0.8
-l_rate = 0.1
-back_propagation(net, expected)
-update_weights(net, l_rate)
-print("\nUpdated Weights:")
-for layer in net:
-    for node in layer:
-        if hasattr(node, 'weights') and node.weights:
-            print(node.weights)
+# expected = 0.8
+# l_rate = 0.1
+# back_propagation(net, expected)
+# update_weights(net, l_rate)
+# print("\nUpdated Weights:")
+# for layer in net:
+#     for node in layer:
+#         if hasattr(node, 'weights') and node.weights:
+#             print(node.weights)
+
+
+
 # def main():
 #     global output_layer
 #     print("Network Structure:")
