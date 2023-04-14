@@ -64,8 +64,9 @@ def forward_propagation(network):
 
 #Test case for forward propagation:
 input_values = np.array([0.5982372, 0.000348347, 0.223456, 0.938743784])
+print("Original Weights:")
 net = initialize_network(net_structure)
-
+print("\nTesting for forward propagation:")
 # Assign input values to the collector of input layer nodes
 for i in range(len(input_values)):
     net[0][i].collector = input_values[i]
@@ -74,6 +75,50 @@ output = forward_propagation(net)
 print("Input Values: ", input_values)
 print("Output: ", output)
 
+def back_propagation(network, expected):
+    for i in reversed(range(len(network))):
+        layer = network[i]
+        errors = []
+        if i == len(network) - 1:
+            #for output layer
+            for j in range(len(layer)):
+                node = layer[j]
+                output = node.collector
+                error = expected - output
+                errors.append(error)
+        else:
+            #for hidden layers
+            for j in range(len(layer)):
+                node = layer[j]
+                error = 0.0
+                for neuron in network[i + 1]:
+                    error += neuron.weights[j]['weights'] * neuron.delta
+                errors.append(error)
+
+        for j in range(len(layer)):
+            node = layer[j]
+            delta = errors[j] * sigmoidal_deriv(node.collector)
+            node.delta = delta
+
+def update_weights(network, lr):
+    for i in range(len(network)):
+        layer = network[i]
+        for node in layer:
+            for j in range(len(node.connections)):
+                con = node.connections[j]
+                weight = node.weights[j]
+                weight['weights'] += lr * node.delta * con.collector
+
+#Test Case for backpropagation:
+expected = 0.8
+l_rate = 0.1
+back_propagation(net, expected)
+update_weights(net, l_rate)
+print("\nUpdated Weights:")
+for layer in net:
+    for node in layer:
+        if hasattr(node, 'weights') and node.weights:
+            print(node.weights)
 # def main():
 #     global output_layer
 #     print("Network Structure:")
