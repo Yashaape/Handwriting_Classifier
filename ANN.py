@@ -12,6 +12,7 @@ class Node:
         self.delta = 0.0
 
 net_structure = np.array([4,2,1])
+input_data = np.loadtxt('input.csv', delimiter=',')
 output_layer = None
 net = []
 
@@ -110,6 +111,18 @@ def update_weights(network, lr):
                 weight = node.weights[j]
                 weight['weights'] += lr * node.delta * con.collector
 
+#Test Case for backpropagation:
+# expected = 0.8
+# l_rate = 0.1
+# back_propagation(net, expected)
+# update_weights(net, l_rate)
+# print("\nUpdated Weights:")
+# for layer in net:
+#     for node in layer:
+#         if hasattr(node, 'weights') and node.weights:
+#             print(node.weights)
+
+
 def train_network(network, train, lr, n_epochs, target_error):
     epoch = 0
     while epoch < n_epochs:
@@ -124,14 +137,14 @@ def train_network(network, train, lr, n_epochs, target_error):
             output = forward_propagation(network)
 
             #calculate error:
-            error = expected_output - output
+            error = np.mean((expected_output - output)**2)
             error_sum += error
 
             #back prop:
             back_propagation(network, expected_output)
 
             #update weights:
-            update_weights(network, lr)
+        update_weights(network, lr)
 
         #calculate average error for this epoch
         avg_error = error_sum / len(train)
@@ -148,8 +161,8 @@ def train_network(network, train, lr, n_epochs, target_error):
 # Define the test case
 #net_structure = np.array([4, 2, 1])
 train_data = [{'input': np.array([0.5982372, 0.000348347, 0.223456, 0.938743784]), 'output': 0.8}]
-
-# Initialize the network
+# print("train: ", train_data)
+# # Initialize the network
 net = initialize_network(net_structure)
 
 # Train the network
@@ -161,73 +174,42 @@ print("Training the network...")
 train_network(net, train_data, lr, n_epochs, target_error)
 
 # Test the trained network
-input_values = np.array([0.5982372, 0.000348347, 0.223456, 0.938743784])
-output = forward_propagation(net)
-print("Input Values: ", input_values)
-print("Output: ", output)
+# input_values = np.array([0.5982372, 0.000348347, 0.223456, 0.938743784])
+# output = forward_propagation(net)
+# print("Input Values: ", input_values)
+# print("Output: ", output)
+
+def main():
+    global output_layer
+    print("Network Structure:")
+    print(net_structure)
+
+    net = initialize_network(net_structure)
+    #nd = node()  This was the cause of my sum being incorrect creating the node outside the loop causes sum errors
+
+    print("network: ", net)
+    print("output layer: ",output_layer) #Output layer aka last layer
+    print()
+
+    print("Inputs:")
+    print(input_data, "\n")
+    train_data = []
+    for row in input_data:
+        X = row[:4]
+        Y = row[4] # not sure if this is correct
+        train_data.append({'input': np.array(X), 'output': 1})
+
+    train_network(net, train_data, lr=0.1, n_epochs=75, target_error=0.05)
+
+    print("Output Layer: ")
+    print(net[-1][0].collector)
+    #print(len(input_data))
+    #print(sum(input_data))
 
 
 
-#Test Case for backpropagation:
-# expected = 0.8
-# l_rate = 0.1
-# back_propagation(net, expected)
-# update_weights(net, l_rate)
-# print("\nUpdated Weights:")
-# for layer in net:
-#     for node in layer:
-#         if hasattr(node, 'weights') and node.weights:
-#             print(node.weights)
+    with open('doneANN.pickle', 'wb') as handle:
+        pickle.dump(net, handle)
 
 
-
-# def main():
-#     global output_layer
-#     print("Network Structure:")
-#     print(net_structure)
-#
-#     net = initialize_network(net_structure)
-#     #nd = node()  This was the cause of my sum being incorrect creating the node outside the loop causes sum errors
-#
-#     print("network: ", net)
-#     print("output layer: ",output_layer) #Output layer aka last layer
-#     print()
-#
-#     print("Inputs:")
-#     input_data = np.loadtxt('input.csv', delimiter=',', dtype=int)
-#     print(input_data)
-#
-#     for i in range(len(input_data)):
-#         if i < len(net[0]):
-#             net[0][i].collector = input_data[i]
-#             print(net[0][i].collector)
-#
-#     print()
-#     print("Output Layer: ")
-#
-#     #print(len(input_data))
-#     #print(sum(input_data))
-#
-#
-#     for i in np.nditer(input_data):
-#         #print(i)
-#         for n in net[i]:
-#             #print(n)
-#             #print(net[i-1])
-#             n.connections = net[i-1] # assign n.connections to net[i-1] to avoid summnation errors
-#             #print(n.connections)
-#
-#             if n.connections:
-#                 n.weights = [random.random()] * len(n.connections)
-#             for index in range(len(n.connections)):
-#                 #print(c)
-#                 c = n.connections[index]
-#                 w = n.weights[index]
-#                 n.collector = n.collector + (c.collector * w)
-#
-#     print(net[2][0].collector)
-#     # with open('doneANN.pickle', 'wb') as handle:
-#     #     pickle.dump(net, handle)
-#
-#
-# main()
+main()
