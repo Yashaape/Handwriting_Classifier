@@ -160,18 +160,18 @@ def train_network(network, train, lr, n_epochs, target_error):
 
 # Define the test case
 #net_structure = np.array([4, 2, 1])
-train_data = [{'input': np.array([0.5982372, 0.000348347, 0.223456, 0.938743784]), 'output': 0.8}]
-# print("train: ", train_data)
-# # Initialize the network
-net = initialize_network(net_structure)
-
-# Train the network
-lr = 0.1
-n_epochs = 100
-target_error = 0.05
-
-print("Training the network...")
-train_network(net, train_data, lr, n_epochs, target_error)
+# train_data = [{'input': np.array([0.5982372, 0.000348347, 0.223456, 0.938743784]), 'output': 0.8}]
+# # print("train: ", train_data)
+# # # Initialize the network
+# net = initialize_network(net_structure)
+#
+# # Train the network
+# lr = 0.1
+# n_epochs = 100
+# target_error = 0.05
+#
+# print("Training the network...")
+# train_network(net, train_data, lr, n_epochs, target_error)
 
 # Test the trained network
 # input_values = np.array([0.5982372, 0.000348347, 0.223456, 0.938743784])
