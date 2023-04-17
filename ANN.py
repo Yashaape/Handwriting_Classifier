@@ -154,7 +154,8 @@ def train_network(network, train, lr, n_epochs, target_error):
         if avg_error <= target_error:
             print("Target error reached: {}".format(target_error))
             break
-        epoch += 1
+        epoch +=1
+    #epoch +=1
     if epoch == n_epochs:
         print("Maximum number of epochs reached. Training stopped.")
 
