@@ -57,7 +57,7 @@ def activation(neuron):
         con = neuron.connections[index]
         weight = neuron.weights[index]['weights'] # access value from dictionary
         sum_of_weights += con.collector * weight
-        print(sum_of_weights)
+        #print(sum_of_weights)
     #print(sigmoidal(sum_of_weights))
     return sigmoidal(sum_of_weights)
 
