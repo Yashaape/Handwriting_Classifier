@@ -20,7 +20,7 @@ def sigmoidal(activation):
     return 1.0 / (1.0 + math.exp(-activation))
 
 def sigmoidal_deriv(output):
-    return output * (1.0 - output)
+    return output * (1.0 - sigmoidal(output))
 
 def initialize_network(network_structure):
     global output_layer
@@ -38,6 +38,7 @@ def initialize_network(network_structure):
             output_layer = output_weights
         net.append(layer)
         output_layer = layer
+    #print(net)
     return net
 
 #Used to visualize adding in weights for each connection in each layer
@@ -56,6 +57,8 @@ def activation(neuron):
         con = neuron.connections[index]
         weight = neuron.weights[index]['weights'] # access value from dictionary
         sum_of_weights += con.collector * weight
+        print(sum_of_weights)
+    #print(sigmoidal(sum_of_weights))
     return sigmoidal(sum_of_weights)
 
 def forward_propagation(network):
@@ -195,12 +198,14 @@ def main():
     print("Inputs:")
     print(input_data, "\n")
     train_data = []
+    print("Training.......................................................")
     for row in input_data:
         X = row[:4]
         Y = row[4] # not sure if this is correct
         train_data.append({'input': np.array(X), 'output': 1})
 
-    train_network(net, train_data, lr=0.1, n_epochs=75, target_error=0.05)
+    #print(forward_propagation(net))
+    train_network(net, train_data, lr=0.1, n_epochs=200, target_error=0.05)
 
     print("Output Layer: ")
     print(net[-1][0].collector)

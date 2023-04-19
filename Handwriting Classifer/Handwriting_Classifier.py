@@ -13,85 +13,67 @@ class Node:
         self.connections = []
         self.weights = []
         self.delta = 0.0
+        if lastlayer is not None:
+            self.connections = lastlayer
+            self.weights = [{'weights': random.random()} for _ in range(len(lastlayer))]
 
 
-net_structure = np.array([784,128,26])
+net_structure = np.array([784,128,1])
 #input_data = []
-output_layer = None
+#output_layer = None
 #net = []
 
-conn = sqlite3.connect('hw.db')
-query = "SELECT * FROM hw_data WHERE letter = 0 ORDER BY random() LIMIT 1000"
-df = pd.read_sql_query(query, conn)
+def get_data():
+    conn = sqlite3.connect('hw.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM hw_data WHERE letter ORDER BY RANDOM() LIMIT 500")
+    data = cursor.fetchall()
+    conn.close()
+    return data
 
-features = df.iloc[:, 1:].to_numpy()
-labels = df['letter'].to_numpy()
-
-conn.close()
-
-print("Features shape: ", features.shape)
-print("Labels shape: ", labels.shape)
-
-print("Sample features:")
-print(features[:10])
-print("Sample labels:")
-print(labels[:10])
-
-# Creating Training and Testing Data:
-input_data = list(zip(features, labels))
-random.shuffle(input_data)
-
-split_index = int(0.8 * len(input_data)) #80% training, 20% testing
-
-train_data = input_data[:split_index]
-test_data = input_data[split_index:]
-
-X_train, Y_train = zip(*train_data)
-X_test, Y_test = zip(*test_data)
-
-print(type(train_data))
+def create_train_test_datasets(data, train_percentage):
+    random.shuffle(data)
+    train_data = data[:int(len(data) * train_percentage)]
+    test_data = data[int(len(data) * train_percentage):]
+    return train_data, test_data
 
 def sigmoidal(activation):
-    return 1.0 / (1.0 + math.exp(-activation))
+    return 1.0 / (1.0 + np.exp(-activation))
 
 def sigmoidal_deriv(output):
-    return output * (1.0 - output)
+    return output * (1.0 - sigmoidal(output))
 
 def initialize_network(network_structure):
     global output_layer
     net = []
+    output_layer = None
     for i in network_structure:
         layer = []
-        for j in range(i):
+        for _ in range(i):
             layer.append(Node(lastlayer=output_layer))
             if output_layer is not None:
                 layer[-1].connections = output_layer
-                layer[-1].weights = [{'weights': random.random()} for i in range(len(output_layer))]
+                layer[-1].weights = [{'weights': random.random()} for _ in range(len(output_layer))]
         if output_layer is not None:
             print(layer[-1].weights)
-            output_weights = [{'output layer weights': random.random()} for i in range(network_structure[2])]
+            output_weights = [{'output layer weights': random.random()} for _ in range(network_structure[-1])]
             print("Output Layer Weights: ", output_weights)
             output_layer = output_weights
         net.append(layer)
         output_layer = layer
+    #print(net)
     return net
 
-#Used to visualize adding in weights for each connection in each layer
-# print("Weights and network Initialization:")
-# random.seed(1)
-# net = initialize_network(net_structure)
-# for layer in net:
-#     for node in layer:
-#         if hasattr(node, 'weights') and node.weights:
-#             print(node.weights)
-# print()
 
 def activation(neuron):
     sum_of_weights = 0.0
     for index in range(len(neuron.connections)):
         con = neuron.connections[index]
         weight = neuron.weights[index]['weights'] # access value from dictionary
+        #neuron.collector = sigmoidal(sum_of_weights)
         sum_of_weights += con.collector * weight
+        #print(sum_of_weights)
+    #print(sigmoidal(sum_of_weights))
     return sigmoidal(sum_of_weights)
 
 def forward_propagation(network):
@@ -100,18 +82,6 @@ def forward_propagation(network):
             node.collector = activation(node)
     return network[-1][0].collector
 
-#Test case for forward propagation:
-# input_values = np.array([0.5982372, 0.000348347, 0.223456, 0.938743784])
-# print("Original Weights:")
-# net = initialize_network(net_structure)
-# print("\nTesting for forward propagation:")
-# # Assign input values to the collector of input layer nodes
-# for i in range(len(input_values)):
-#     net[0][i].collector = input_values[i]
-#
-# output = forward_propagation(net)
-# print("Input Values: ", input_values)
-# print("Output: ", output)
 
 def back_propagation(network, expected):
     for i in reversed(range(len(network))):
@@ -138,6 +108,7 @@ def back_propagation(network, expected):
             delta = errors[j] * sigmoidal_deriv(node.collector)
             node.delta = delta
 
+
 def update_weights(network, lr):
     for i in range(len(network)):
         layer = network[i]
@@ -147,57 +118,58 @@ def update_weights(network, lr):
                 weight = node.weights[j]
                 weight['weights'] += lr * node.delta * con.collector
 
-#Test Case for backpropagation:
-# expected = 0.8
-# l_rate = 0.1
-# back_propagation(net, expected)
-# update_weights(net, l_rate)
-# print("\nUpdated Weights:")
-# for layer in net:
-#     for node in layer:
-#         if hasattr(node, 'weights') and node.weights:
-#             print(node.weights)
-
 
 def train_network(network, train, lr, n_epochs, target_error):
-    epoch = 0
-    while epoch < n_epochs:
+    for epoch in range(n_epochs):
         error_sum = 0.0
         for data in train:
-            input_values = data[0] #changed value so that the function could take in a list of tuples
-            expected_output = data[1] ##changed value so that the function could take in a list of tuples
+            letter = data[0]
+            input_values = data[1:]
+            expected_output = 1 if letter == 0 else 0
 
-            #Forward Prop:
+            #forward prop:
             for i in range(len(input_values)):
                 network[0][i].collector = input_values[i]
             output = forward_propagation(network)
-
+            #print(output)
             #calculate error:
-            expected_output = float(expected_output)
-            error = np.mean((expected_output - output)**2)
+            #print(expected_output)
+            error = (expected_output - output) ** 2
             error_sum += error
 
-            #back prop:
+            #Back prop:
             back_propagation(network, expected_output)
 
             #update weights:
-        update_weights(network, lr)
-
-        #calculate average error for this epoch
+            update_weights(network, lr)
+        #print(error_sum)
+        #calculate average error per epoch:
         avg_error = error_sum / len(train)
         print("Epoch: {}, l_rate: {}, Error: {}".format(epoch, lr, avg_error))
-
-        # Check if target error is reached:
         if avg_error <= target_error:
-            print("Target error reached: {}".format(target_error))
+            print(f"Target error ({target_error}) reached after {epoch + 1} epochs")
             break
-        epoch += 1
-    if epoch == n_epochs:
-        print("Maximum number of epochs reached. Training stopped.")
 
+        #reset error sum
+        error_sum = 0.0
+
+def predict(network, input_data, expected_output):
+    for i in range(len(input_data)):
+        network[0][i].collector = input_data[i]
+    output = forward_propagation(network)
+    predicted_output = round(output)
+    print("Expected = {}, Predicted = {}".format(expected_output, predicted_output))
+    return predicted_output
+
+data = get_data()
+train_data, test_data = create_train_test_datasets(data, 0.2)
+print(len(train_data))
 net = initialize_network(net_structure)
-train_network(net, train_data, lr=0.1, n_epochs=20, target_error=0.05)
+print(forward_propagation(net))
+train_network(net, train_data, lr=0.001, n_epochs=100, target_error=0.01)
 
+for row in test_data:
+    predict(net, row[:-1], row[-1])
 # Define the test case
 #net_structure = np.array([4, 2, 1])
 # train_data = [{'input': np.array([0.5982372, 0.000348347, 0.223456, 0.938743784]), 'output': 0.8}]
