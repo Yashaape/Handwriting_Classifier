@@ -5,6 +5,8 @@ import pickle
 import sqlite3
 import math
 
+np.random.seed(42)
+
 class Node:
 
     def __init__(self, lastlayer = None):
@@ -15,7 +17,7 @@ class Node:
         self.delta = 0.0
         if lastlayer is not None:
             self.connections = lastlayer
-            self.weights = [{'weights': random.random()} for _ in range(len(lastlayer))]
+            self.weights = [{'weights': np.random.rand()} for _ in range(len(lastlayer))] #Used np.random.normal because I was having issues with exploding gradients
 
 
 net_structure = np.array([784,128,1])
@@ -23,25 +25,27 @@ net_structure = np.array([784,128,1])
 #output_layer = None
 #net = []
 
-def get_data():
+def get_data(letter):
     conn = sqlite3.connect('hw.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hw_data WHERE letter ORDER BY RANDOM() LIMIT 500")
+    cursor.execute("SELECT * FROM hw_data WHERE letter = {} ORDER BY RANDOM() limit 1000".format(letter))
     data = cursor.fetchall()
+    #print(data)
     conn.close()
     return data
 
 def create_train_test_datasets(data, train_percentage):
-    random.shuffle(data)
+    np.random.shuffle(data)
     train_data = data[:int(len(data) * train_percentage)]
     test_data = data[int(len(data) * train_percentage):]
+
     return train_data, test_data
 
 def sigmoidal(activation):
     return 1.0 / (1.0 + np.exp(-activation))
 
 def sigmoidal_deriv(output):
-    return output * (1.0 - sigmoidal(output))
+    return sigmoidal(output) * (1.0 - sigmoidal(output))
 
 def initialize_network(network_structure):
     global output_layer
@@ -53,10 +57,10 @@ def initialize_network(network_structure):
             layer.append(Node(lastlayer=output_layer))
             if output_layer is not None:
                 layer[-1].connections = output_layer
-                layer[-1].weights = [{'weights': random.random()} for _ in range(len(output_layer))]
+                layer[-1].weights = [{'weights': np.random.rand()} for _ in range(len(output_layer))]
         if output_layer is not None:
             print(layer[-1].weights)
-            output_weights = [{'output layer weights': random.random()} for _ in range(network_structure[-1])]
+            output_weights = [{'output layer weights': np.random.rand()} for _ in range(network_structure[-1])]
             print("Output Layer Weights: ", output_weights)
             output_layer = output_weights
         net.append(layer)
@@ -119,13 +123,13 @@ def update_weights(network, lr):
                 weight['weights'] += lr * node.delta * con.collector
 
 
-def train_network(network, train, lr, n_epochs, target_error):
+def train_network(network, train, test_letter, lr, n_epochs, target_error):
     for epoch in range(n_epochs):
         error_sum = 0.0
         for data in train:
             letter = data[0]
             input_values = data[1:]
-            expected_output = 1 if letter == 0 else 0
+            expected_output = 1 if letter == test_letter else 0
 
             #forward prop:
             for i in range(len(input_values)):
@@ -152,7 +156,8 @@ def train_network(network, train, lr, n_epochs, target_error):
 
         #reset error sum
         error_sum = 0.0
-
+        if (epoch + 1) == n_epochs:
+            print("Maximum number of epochs reached. Training stopped.")
 def predict(network, input_data, expected_output):
     for i in range(len(input_data)):
         network[0][i].collector = input_data[i]
@@ -161,15 +166,71 @@ def predict(network, input_data, expected_output):
     print("Expected = {}, Predicted = {}".format(expected_output, predicted_output))
     return predicted_output
 
-data = get_data()
-train_data, test_data = create_train_test_datasets(data, 0.2)
-print(len(train_data))
-net = initialize_network(net_structure)
-print(forward_propagation(net))
-train_network(net, train_data, lr=0.001, n_epochs=100, target_error=0.01)
 
-for row in test_data:
-    predict(net, row[:-1], row[-1])
+def model_A():
+    print("Traning on the letter A....\n")
+    data = get_data("0")
+    train_data, test_data = create_train_test_datasets(data, 0.2)
+    print(len(train_data))
+    net = initialize_network(net_structure)
+    print(forward_propagation(net))
+    train_network(net, train_data, test_letter=0, lr=0.001, n_epochs=2500, target_error=0.01)
+    print(forward_propagation(net))
+
+
+def model_B():
+    print("\nTraning on the letter B....\n")
+    data = get_data("1")
+    train_data, test_data = create_train_test_datasets(data, 0.2)
+    print(len(train_data))
+    net = initialize_network(net_structure)
+    print(forward_propagation(net))
+    train_network(net, train_data, test_letter=1, lr=0.001, n_epochs=2500, target_error=0.01)
+    print(forward_propagation(net))
+
+
+def model_C():
+    print("\nTraning on the letter C....\n")
+    data = get_data("2")
+    train_data, test_data = create_train_test_datasets(data, 0.2)
+    print(len(train_data))
+    net = initialize_network(net_structure)
+    print(forward_propagation(net))
+    train_network(net, train_data, test_letter=2, lr=0.001, n_epochs=2500, target_error=0.01)
+    print(forward_propagation(net))
+
+
+def model_D():
+    print("\nTraning on the letter D....\n")
+    data = get_data("3")
+    train_data, test_data = create_train_test_datasets(data, 0.2)
+    print(len(train_data))
+    net = initialize_network(net_structure)
+    print(forward_propagation(net))
+    train_network(net, train_data, test_letter=3, lr=0.001, n_epochs=2500, target_error=0.01)
+    print(forward_propagation(net))
+
+
+def model_Z():
+    print("\nTraning on the letter Z....\n")
+    data = get_data("25")
+    train_data, test_data = create_train_test_datasets(data, 0.2)
+    print(len(train_data))
+    net = initialize_network(net_structure)
+    print(forward_propagation(net))
+    train_network(net, train_data, test_letter=25, lr=0.001, n_epochs=2500, target_error=0.01)
+    print(forward_propagation(net))
+
+
+model_A()
+model_B()
+model_C()
+model_D()
+model_Z()
+
+
+# for row in test_data:
+#     predict(net, row[:-1], row[-1])
 # Define the test case
 #net_structure = np.array([4, 2, 1])
 # train_data = [{'input': np.array([0.5982372, 0.000348347, 0.223456, 0.938743784]), 'output': 0.8}]
