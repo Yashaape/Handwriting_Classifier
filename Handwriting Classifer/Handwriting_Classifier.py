@@ -181,7 +181,7 @@ def model_A():
     print(len(test_data))
     net = initialize_network(net_structure)
     print(forward_propagation(net))
-    train_network(net, train_data, test_letter=0, lr=0.0001, n_epochs=2500, target_error=0.01)
+    train_network(net, train_data, test_letter=0, lr=0.001, n_epochs=2500, target_error=0.01)
     print(forward_propagation(net))
 
 
@@ -193,7 +193,7 @@ def model_B():
     print(len(test_data))
     net = initialize_network(net_structure)
     print(forward_propagation(net))
-    train_network(net, train_data, test_letter=1, lr=0.001, n_epochs=2500, target_error=0.05)
+    train_network(net, train_data, test_letter=1, lr=0.001, n_epochs=2500, target_error=0.01)
     print(forward_propagation(net))
 
 
@@ -205,7 +205,7 @@ def model_C():
     print(len(test_data))
     net = initialize_network(net_structure)
     print(forward_propagation(net))
-    train_network(net, train_data, test_letter=2, lr=0.01, n_epochs=2500, target_error=0.001)
+    train_network(net, train_data, test_letter=2, lr=0.001, n_epochs=2500, target_error=0.01)
     print(forward_propagation(net))
 
 
@@ -217,7 +217,7 @@ def model_D():
     print(len(test_data))
     net = initialize_network(net_structure)
     print(forward_propagation(net))
-    train_network(net, train_data, test_letter=3, lr=0.1, n_epochs=2500, target_error=0.0001)
+    train_network(net, train_data, test_letter=3, lr=0.1, n_epochs=2500, target_error=0.01)
     print(forward_propagation(net))
 
 

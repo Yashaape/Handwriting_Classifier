@@ -6,12 +6,12 @@ class Node:
 
     def __init__(self, lastlayer = None):
         self.lastlayer = lastlayer
-        self.collector = 0.0
-        self.connections = []
-        self.weights = []
-        self.delta = 0.0
+        self.collector = 0.0   #sum of weighted inmputs to neuron
+        self.connections = []  #list of neurons in previous layer connected to it's neuron
+        self.weights = [] #associated with each connection to previous layer
+        self.delta = 0.0 #Used to store error in the output of the neuron for back propagation
 
-net_structure = np.array([4,2,1])
+net_structure = np.array([4,2,1]) # 4 input layers, 2 hidden layers, 1 output
 input_data = np.loadtxt('input.csv', delimiter=',')
 output_layer = None
 net = []
@@ -22,15 +22,17 @@ def sigmoidal(activation):
 def sigmoidal_deriv(output):
     return output * (1.0 - sigmoidal(output))
 
+#@param: network_structure: a numpy list that gives the number of nodes for each layer of the network
+#@return: net: a list of lists representing the initialized network
 def initialize_network(network_structure):
     global output_layer
     for i in network_structure:
         layer = []
         for j in range(i):
-            layer.append(Node(lastlayer=output_layer))
+            layer.append(Node(lastlayer=output_layer)) #appends new node obj to layer list
             if output_layer is not None:
                 layer[-1].connections = output_layer
-                layer[-1].weights = [{'weights': random.random()} for i in range(len(output_layer))]
+                layer[-1].weights = [{'weights': random.random()} for i in range(len(output_layer))] #initializes random weights for each connection
         if output_layer is not None:
             print(layer[-1].weights)
             output_weights = [{'output layer weights': random.random()} for i in range(network_structure[2])]
