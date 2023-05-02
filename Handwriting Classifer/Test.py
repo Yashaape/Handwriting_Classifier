@@ -1,4 +1,3 @@
-
 import numpy as np
 import random
 import pandas as pd
@@ -18,34 +17,50 @@ class Node:
         self.delta = 0.0
         if lastlayer is not None:
             self.connections = lastlayer
-            self.weights = [{'weights': np.random.rand()} for _ in range
-                (len(lastlayer))]  # Used np.random.normal because I was having issues with exploding gradients
+            n_input = len(lastlayer)
+            n_output = 1
+            self.weights = [{'weights': np.random.rand()} for _ in range(len(lastlayer))] #Used np.random.normal because I was having issues with exploding gradients
 
 
-net_structure = np.array([784, 400, 200, 60, 1])
-
-
-# input_data = []
-# output_layer = None
-# net = []
+net_structure = np.array([784,128,1])
+#input_data = []
+#output_layer = None
+#net = []
 
 def get_data(letter):
     conn = sqlite3.connect('hw.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hw_data WHERE letter = {} ORDER BY RANDOM() limit 1000".format(letter))
+    cursor.execute("SELECT * FROM hw_data WHERE letter = {} ORDER BY RANDOM() limit 100".format(letter))
     data = cursor.fetchall()
     #print(data)
     conn.close()
-    return data
 
-#get_data("0")
+    train_X = []
+    test_Y = []
 
-def create_train_test_datasets(data, train_percentage):
+    for row in data:
+        test_Y.append(row[0])
+        train_X.append([float(pixel) / 255.0 for pixel in row[1:]])
+
+    return (train_X, test_Y)
+
+#get_data("2")
+
+def create_train_test_datasets(test_letter, train_percentage):
+    train_X, test_Y = get_data(test_letter)
+    data = list(zip(train_X, test_Y))
     np.random.shuffle(data)
-    train_data = data[:int(len(data) * train_percentage)]
-    test_data = data[int(len(data) * train_percentage):]
 
-    return train_data, test_data
+    train_size = int(len(data) * train_percentage)
+    #print(train_size)
+    train_data = data[:train_size]
+    #print(train_data)
+    test_data = data[train_size:]
+    #print(test_data)
+    train_X, train_Y = zip(*train_data)
+    test_X, test_Y = zip(*test_data)
+
+    return (np.array(train_X), np.array(train_Y)), (np.array(test_X), np.array(test_Y))
 
 def sigmoidal(activation):
     return 1.0 / (1.0 + np.exp(-activation))
@@ -71,7 +86,7 @@ def initialize_network(network_structure):
             output_layer = output_weights
         net.append(layer)
         output_layer = layer
-    # print(net)
+    #print(net)
     return net
 
 
@@ -79,11 +94,11 @@ def activation(neuron):
     sum_of_weights = 0.0
     for index in range(len(neuron.connections)):
         con = neuron.connections[index]
-        weight = neuron.weights[index]['weights'] # access value from dictionary
+        weight = neuron.weights[index]['weights']  # access value from dictionary
         # neuron.collector = sigmoidal(sum_of_weights)
         sum_of_weights += con.collector * weight
         # print(sum_of_weights)
-    # print(sigmoidal(sum_of_weights))
+    #print(sigmoidal(sum_of_weights))
     return sigmoidal(sum_of_weights)
 
 def forward_propagation(network):
@@ -98,14 +113,14 @@ def back_propagation(network, expected):
         layer = network[i]
         errors = []
         if i == len(network) - 1:
-            # for output layer
+            #for output layer
             for j in range(len(layer)):
                 node = layer[j]
                 output = node.collector
                 error = expected - output
                 errors.append(error)
         else:
-            # for hidden layers
+            #for hidden layers
             for j in range(len(layer)):
                 node = layer[j]
                 error = 0.0
@@ -129,41 +144,42 @@ def update_weights(network, lr):
                 weight['weights'] += lr * node.delta * con.collector
 
 
-def train_network(network, train, test_letter, lr, n_epochs, target_error):
+def train_network(network, train_data, test_letter, lr, n_epochs, target_error):
+    train_X, train_Y = train_data
     for epoch in range(n_epochs):
         error_sum = 0.0
-        for data in train:
-            letter = data[0]
-            input_values = data[1:]
-            expected_output = 1 if letter == test_letter else 0
+        for i in range(len(train_X)):
+            input_values = train_X[i]
+            expected_output = 1 if train_Y[i] == test_letter else 0
 
-            # forward prop:
-            for i in range(len(input_values)):
-                network[0][i].collector = input_values[i]
+            #forward prop:
+            for j in range(len(input_values)):
+                network[0][j].collector = input_values[j]
             output = forward_propagation(network)
-            # print(output)
-            # calculate error:
-            # print(expected_output)
+            #print(output)
+            #calculate error:
+            #print(expected_output)
             error = (expected_output - output) ** 2
             error_sum += error
 
-            # Back prop:
+            #Back prop:
             back_propagation(network, expected_output)
 
-            # update weights:
+            #update weights:
             update_weights(network, lr)
-        # print(error_sum)
-        # calculate average error per epoch:
-        avg_error = error_sum / len(train)
+        #print(error_sum)
+        #calculate average error per epoch:
+        avg_error = error_sum / len(train_X)
         print("Epoch: {}, l_rate: {}, Error: {}".format(epoch, lr, avg_error))
         if avg_error <= target_error:
             print(f"Target error ({target_error}) reached after {epoch + 1} epochs")
             break
 
-        # reset error sum
+        #reset error sum
         error_sum = 0.0
         if (epoch + 1) == n_epochs:
             print("Maximum number of epochs reached. Training stopped.")
+
 def predict(network, input_data, expected_output):
     for i in range(len(input_data)):
         network[0][i].collector = input_data[i]
@@ -175,76 +191,119 @@ def predict(network, input_data, expected_output):
 
 def model_A():
     print("Traning on the letter A....\n")
-    data = get_data("0")
-    train_data, test_data = create_train_test_datasets(data, 0.2)
+    #data = get_data("0")
+    train_data, test_data = create_train_test_datasets(test_letter="0", train_percentage=0.8)
     print(len(train_data))
-    print(len(test_data))
     net = initialize_network(net_structure)
     print(forward_propagation(net))
-    train_network(net, train_data, test_letter=0, lr=0.001, n_epochs=2500, target_error=0.01)
+    train_network(net, train_data, test_letter='0', lr=0.001, n_epochs=2500, target_error=0.01)
     print(forward_propagation(net))
 
 
 def model_B():
     print("\nTraning on the letter B....\n")
-    data = get_data("1")
-    train_data, test_data = create_train_test_datasets(data, 0.2)
+    #data = get_data("1")
+    train_data, test_data = create_train_test_datasets(test_letter="1", train_percentage=0.8)
     print(len(train_data))
-    print(len(test_data))
     net = initialize_network(net_structure)
     print(forward_propagation(net))
-    train_network(net, train_data, test_letter=1, lr=0.001, n_epochs=2500, target_error=0.01)
+    train_network(net, train_data, test_letter="1", lr=0.0001, n_epochs=2500, target_error=0.01)
     print(forward_propagation(net))
 
 
 def model_C():
     print("\nTraning on the letter C....\n")
-    data = get_data("2")
-    train_data, test_data = create_train_test_datasets(data, 0.2)
+    #data = get_data("2")
+    train_data, test_data = create_train_test_datasets(test_letter="2", train_percentage=0.8)
     print(len(train_data))
-    print(len(test_data))
     net = initialize_network(net_structure)
     print(forward_propagation(net))
-    train_network(net, train_data, test_letter=2, lr=0.001, n_epochs=2500, target_error=0.01)
+    train_network(net, train_data, test_letter="2", lr=0.001, n_epochs=2500, target_error=0.01)
     print(forward_propagation(net))
 
 
 def model_D():
     print("\nTraning on the letter D....\n")
-    data = get_data("3")
-    train_data, test_data = create_train_test_datasets(data, 0.2)
+    #data = get_data("3")
+    train_data, test_data = create_train_test_datasets(test_letter="3", train_percentage=0.8)
     print(len(train_data))
-    print(len(test_data))
     net = initialize_network(net_structure)
     print(forward_propagation(net))
-    train_network(net, train_data, test_letter=3, lr=0.001, n_epochs=2500, target_error=0.01)
+    train_network(net, train_data, test_letter="3", lr=0.001, n_epochs=2500, target_error=0.01)
     print(forward_propagation(net))
 
 
 def model_Z():
     print("\nTraning on the letter Z....\n")
-    data = get_data("25")
-    train_data, test_data = create_train_test_datasets(data, 0.2)
+    train_data, test_data = create_train_test_datasets(test_letter="25", train_percentage=0.8)
     print(len(train_data))
-    print(len(test_data))
     net = initialize_network(net_structure)
     print(forward_propagation(net))
-    train_network(net, train_data, test_letter=25, lr=0.001, n_epochs=2500, target_error=0.01)
+    train_network(net, train_data, test_letter="25", lr=0.001, n_epochs=2500, target_error=0.01)
     print(forward_propagation(net))
 
 
-#Note: For better training, a learning rate of 0.0001 seems to be best, it's just very long
-#      To save time I used .001 as it still shows that the error is decreasing
+model_A()
+#model_B()
+#model_C()
+#model_D()
+#model_Z()
 
-def main():
-    net = initialize_network(net_structure)
-    model_A()
-    model_B()
-    model_C()
-    model_D()
-    model_Z()
 
-    with open('doneANN.pickle', 'wb') as handle:
-        pickle.dump(net, handle)
+# for row in test_data:
+#     predict(net, row[:-1], row[-1])
+# Define the test case
+#net_structure = np.array([4, 2, 1])
+# train_data = [{'input': np.array([0.5982372, 0.000348347, 0.223456, 0.938743784]), 'output': 0.8}]
+# # print("train: ", train_data)
+# # # Initialize the network
+# net = initialize_network(net_structure)
+#
+# # Train the network
+# lr = 0.1
+# n_epochs = 100
+# target_error = 0.05
+#
+# print("Training the network...")
+# train_network(net, train_data, lr, n_epochs, target_error)
 
-main()
+# Test the trained network
+# input_values = np.array([0.5982372, 0.000348347, 0.223456, 0.938743784])
+# output = forward_propagation(net)
+# print("Input Values: ", input_values)
+# print("Output: ", output)
+
+# def main():
+#     global output_layer
+#     print("Network Structure:")
+#     print(net_structure)
+#
+#     net = initialize_network(net_structure)
+#     #nd = node()  This was the cause of my sum being incorrect creating the node outside the loop causes sum errors
+#
+#     print("network: ", net)
+#     print("output layer: ",output_layer) #Output layer aka last layer
+#     print()
+#
+#     print("Inputs:")
+#     print(input_data, "\n")
+#     train_data = []
+#     for row in input_data:
+#         X = row[:4]
+#         Y = row[4] # not sure if this is correct
+#         train_data.append({'input': np.array(X), 'output': 1})
+#
+#     train_network(net, train_data, lr=0.1, n_epochs=75, target_error=0.05)
+#
+#     print("Output Layer: ")
+#     print(net[-1][0].collector)
+#     #print(len(input_data))
+#     #print(sum(input_data))
+#
+#
+#
+#     with open('doneANN.pickle', 'wb') as handle:
+#         pickle.dump(net, handle)
+#
+#
+# main()
